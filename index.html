@@ -109,13 +109,11 @@
 
 
 <script>
-    // 1. CONFIGURACIÓN
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwTXgHqYWUjfbl6BUWY38EoXq2vP3gysNTUtp7GqkbQazE8waOmy8uzHcmqRLkcKIadXg/exec";
     let currentUser = localStorage.getItem('activeUser');
 
     window.onload = () => { if (currentUser) showInventory(); };
 
-    // 2. SESIÓN
     function login() {
         const name = document.getElementById('user-name').value;
         if (!name) return Swal.fire('Error', 'Elige un responsable', 'error');
@@ -138,35 +136,22 @@
         document.getElementById('view-manage').classList.toggle('hidden', tab !== 'manage');
         document.getElementById('tab-reg').classList.toggle('tab-active', tab === 'reg');
         document.getElementById('tab-manage').classList.toggle('tab-active', tab === 'manage');
-        if(tab === 'manage') {
-            loadTable();
-            document.getElementById('search-result').classList.add('hidden');
-            document.getElementById('search-code').value = '';
+        if(tab === 'manage') { loadTable(); }
+    }
+
+    // --- FORMATEO SIMPLE PARA EVITAR DESFASES ---
+    function formatSimple(val) {
+        if(!val) return "--";
+        const s = val.toString();
+        if(s.includes('T')) {
+            const partes = s.split('T');
+            const fecha = partes[0].split('-').reverse().join('/');
+            const hora = partes[1].substring(0, 5);
+            return { f: fecha, h: hora };
         }
+        return { f: s, h: "" };
     }
 
-    // --- FUNCIONES DE FORMATO REFORZADAS ---
-    function formatFecha(dateInput) {
-        if(!dateInput) return "--";
-        // Extrae solo YYYY-MM-DD del inicio del string y lo voltea
-        const match = dateInput.toString().match(/(\d{4})-(\d{2})-(\d{2})/);
-        if (match) return `${match[3]}/${match[2]}/${match[1]}`;
-        return dateInput.toString().substring(0, 10);
-    }
-
-    function formatHora(timeInput) {
-        if(!timeInput) return "--";
-        const str = timeInput.toString();
-        // Si contiene la 'T', la hora está después de ella
-        if(str.includes('T')) {
-            const parteHora = str.split('T')[1];
-            return parteHora.substring(0, 5);
-        }
-        // Si no tiene T, simplemente toma los primeros 5 caracteres
-        return str.substring(0, 5);
-    }
-
-    // 3. REGISTRO
     async function registerAsset() {
         const input = document.getElementById('asset-code');
         const code = input.value.trim().toUpperCase();
@@ -175,132 +160,98 @@
 
         if (!code) return;
 
+        // CAPTURAR HORA LOCAL DE COLOMBIA
+        const ahora = new Date();
+        const localDate = ahora.toLocaleDateString('en-CA'); // YYYY-MM-DD
+        const localTime = ahora.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
         btn.disabled = true;
-        btn.classList.replace('bg-emerald-500', 'bg-gray-400');
         txt.innerHTML = `<span class="spinner"></span> REGISTRANDO...`;
 
         try {
-            const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ code: code, user: currentUser }) });
+            const response = await fetch(WEB_APP_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    code: code, 
+                    user: currentUser,
+                    manualDate: localDate, // Enviamos la fecha de tu equipo
+                    manualTime: localTime  // Enviamos la hora de tu equipo
+                }) 
+            });
             const res = await response.json();
 
             if (res.status === "exists") {
-                Swal.fire({ icon: 'error', title: 'ACTIVO YA EXISTE', html: `Registrado el: <b>${formatFecha(res.date)}</b>` });
+                Swal.fire({ icon: 'error', title: 'YA EXISTE', text: `Registrado anteriormente.` });
             } else {
-                Swal.fire({ icon: 'success', title: 'REGISTRADO', timer: 1500, showConfirmButton: false });
+                Swal.fire({ icon: 'success', title: 'REGISTRADO', timer: 1000, showConfirmButton: false });
                 addLog(code);
                 input.value = '';
             }
-        } catch (e) { Swal.fire('Error', 'Error de conexión', 'error'); }
+        } catch (e) { Swal.fire('Error', 'Sin conexión', 'error'); }
         
         btn.disabled = false;
-        btn.classList.replace('bg-gray-400', 'bg-emerald-500');
         txt.innerHTML = `REGISTRAR AHORA`;
         input.focus();
     }
 
-    // 4. BÚSQUEDA Y ELIMINACIÓN
     async function searchAsset() {
         const code = document.getElementById('search-code').value.trim().toUpperCase();
-        const btn = document.getElementById('btn-search');
-        const txt = document.getElementById('txt-search');
         const resDiv = document.getElementById('search-result');
-        
         if (!code) return;
-
-        btn.disabled = true;
-        txt.innerHTML = `<span class="spinner"></span>`;
-        resDiv.classList.add('hidden');
 
         try {
             const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'search', code: code }) });
             const res = await response.json();
 
             if (res.status === "found") {
-                resDiv.innerHTML = `<p class="text-[10px] text-center font-bold text-indigo-400 mb-3 uppercase">${res.data.length} Coincidencias</p>`;
+                resDiv.innerHTML = "";
                 res.data.forEach(item => {
+                    const info = formatSimple(item.date + 'T' + item.time);
                     const card = document.createElement('div');
                     card.className = "p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 mb-2 flex justify-between items-center";
-                    card.innerHTML = `
-                        <div>
-                            <p class="font-mono font-black text-gray-800">${item.code}</p>
-                            <p class="text-[9px] text-gray-500 uppercase">👤 ${item.user} | 📅 ${formatFecha(item.date)} - ${formatHora(item.time)}</p>
-                        </div>
-                        <button onclick="deleteDirect('${item.code}')" class="text-red-500 p-2 hover:bg-red-100 rounded-lg transition-all">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    `;
+                    card.innerHTML = `<div><p class="font-mono font-black">${item.code}</p><p class="text-[9px]">👤 ${item.user} | 📅 ${info.f} - ${info.h}</p></div>
+                        <button onclick="deleteDirect('${item.code}')" class="text-red-500 p-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
                     resDiv.appendChild(card);
                 });
                 resDiv.classList.remove('hidden');
-            } else {
-                Swal.fire('No encontrado', 'No hay resultados', 'info');
-            }
-        } catch (e) { Swal.fire('Error', 'Fallo en búsqueda', 'error'); }
-
-        btn.disabled = false;
-        txt.innerText = "BUSCAR";
+            } else { Swal.fire('No encontrado', '', 'info'); }
+        } catch (e) { }
     }
 
-    async function deleteDirect(code) {
-        const confirm = await Swal.fire({
-            title: '¿Eliminar registro?',
-            text: `Activo: ${code}`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            confirmButtonText: 'SÍ, ELIMINAR',
-            cancelButtonText: 'CANCELAR'
-        });
-
-        if (confirm.isConfirmed) {
-            Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
-            try {
-                const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', code: code }) });
-                const res = await response.json();
-                if (res.status === "deleted") {
-                    Swal.fire({ icon: 'success', title: 'Eliminado', timer: 1000, showConfirmButton: false });
-                    loadTable();
-                    document.getElementById('search-result').classList.add('hidden');
-                    document.getElementById('search-code').value = '';
-                }
-            } catch (e) { Swal.fire('Error', 'No se pudo borrar', 'error'); }
-        }
-    }
-
-    // 5. TABLA PRINCIPAL
     async function loadTable() {
         const body = document.getElementById('table-body');
-        body.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-400 italic">Cargando base de datos...</td></tr>`;
-
+        body.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-400 italic">Cargando...</td></tr>`;
         try {
             const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) });
             const res = await response.json();
-
             if (res.status === "success") {
                 body.innerHTML = "";
                 res.data.reverse().forEach(item => {
+                    const info = formatSimple(item.date + 'T' + item.time);
                     const row = document.createElement('tr');
-                    row.className = "border-b border-gray-50 hover:bg-gray-50 transition-colors group";
-                    row.innerHTML = `
-                        <td class="p-3 font-mono font-bold text-gray-700">${item.code}</td>
-                        <td class="p-3 text-indigo-500">${item.user}</td>
-                        <td class="p-3 text-right text-gray-400 text-[10px] leading-tight">${formatFecha(item.date)}<br>${formatHora(item.time)}</td>
-                        <td class="p-3 text-right">
-                            <button onclick="deleteDirect('${item.code}')" class="text-gray-300 group-hover:text-red-500 transition-colors p-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        </td>
-                    `;
+                    row.className = "border-b hover:bg-gray-50 transition-colors";
+                    row.innerHTML = `<td class="p-3 font-mono font-bold">${item.code}</td><td class="p-3 text-indigo-500">${item.user}</td>
+                        <td class="p-3 text-right text-gray-400 text-[10px]">${info.f}<br>${info.h}</td>
+                        <td class="p-3 text-right"><button onclick="deleteDirect('${item.code}')" class="text-gray-300 hover:text-red-500 p-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></td>`;
                     body.appendChild(row);
                 });
             }
-        } catch (e) { body.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-red-400 uppercase text-[10px]">Error de red</td></tr>`; }
+        } catch (e) { }
+    }
+
+    async function deleteDirect(code) {
+        const confirm = await Swal.fire({ title: '¿Eliminar?', text: code, icon: 'warning', showCancelButton: true, confirmButtonText: 'SÍ' });
+        if (confirm.isConfirmed) {
+            await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', code: code }) });
+            loadTable();
+            document.getElementById('search-result').classList.add('hidden');
+        }
     }
 
     function addLog(code) {
         const list = document.getElementById('log-list');
         const item = document.createElement('div');
-        item.className = "flex justify-between p-3 bg-white rounded-xl shadow-sm text-[10px] border border-emerald-100 border-l-4 border-l-emerald-500 animate-in slide-in-from-top-2";
+        item.className = "flex justify-between p-3 bg-white rounded-xl shadow-sm text-[10px] border-l-4 border-l-emerald-500 mb-2";
         item.innerHTML = `<strong>${code}</strong> <span class="text-emerald-500 font-bold uppercase">Recibido</span>`;
         list.prepend(item);
         if(list.children.length > 5) list.lastChild.remove();
