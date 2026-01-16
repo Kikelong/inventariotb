@@ -145,25 +145,25 @@
         }
     }
 
-    // --- FUNCIONES DE FORMATO CORREGIDAS PARA HORA LOCAL ---
+    // --- FUNCIONES DE FORMATO REFORZADAS ---
     function formatFecha(dateInput) {
         if(!dateInput) return "--";
-        const d = new Date(dateInput);
-        // Usamos getUTC para evitar que el navegador reste horas accidentalmente
-        const dia = String(d.getUTCDate()).padStart(2, '0');
-        const mes = String(d.getUTCMonth() + 1).padStart(2, '0');
-        const anio = d.getUTCFullYear();
-        return `${dia}/${mes}/${anio}`;
+        // Extrae solo YYYY-MM-DD del inicio del string y lo voltea
+        const match = dateInput.toString().match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (match) return `${match[3]}/${match[2]}/${match[1]}`;
+        return dateInput.toString().substring(0, 10);
     }
 
     function formatHora(timeInput) {
         if(!timeInput) return "--";
-        // Si el string contiene la T de ISO, extraemos la parte del tiempo directamente
-        if(timeInput.toString().includes('T')) {
-            const soloHora = timeInput.split('T')[1].substring(0, 5);
-            return soloHora;
+        const str = timeInput.toString();
+        // Si contiene la 'T', la hora está después de ella
+        if(str.includes('T')) {
+            const parteHora = str.split('T')[1];
+            return parteHora.substring(0, 5);
         }
-        return timeInput.toString().substring(0, 5);
+        // Si no tiene T, simplemente toma los primeros 5 caracteres
+        return str.substring(0, 5);
     }
 
     // 3. REGISTRO
