@@ -82,36 +82,34 @@
             const codeInput = document.getElementById('asset-code');
             const code = codeInput.value.trim().toUpperCase();
             const btn = document.getElementById('btn-register');
-
-            if (!code) return Swal.fire('Atención', 'Ingresa un código válido', 'warning');
-
+        
+            if (!code) return;
+        
             btn.disabled = true;
-            btn.innerText = "Verificando...";
-
+            btn.innerText = "Procesando...";
+        
             try {
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // Para evitar problemas de CORS simples
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'register',
-                        code: code,
-                        user: currentUser
-                    })
+                    body: JSON.stringify({ code: code, user: currentUser })
                 });
-
-                // Como usamos no-cors no podemos leer la respuesta JSON directamente fácilmente, 
-                // pero aquí te doy la lógica para un flujo profesional con Google Sheets:
                 
-                // NOTA: Para una validación real de "ya existe", Google Sheets debe responder.
-                // Por ahora, simularemos el éxito. Abajo te explico cómo conectar el "Ya existe".
-                
-                Swal.fire('¡Éxito!', 'Activo registrado correctamente', 'success');
-                addLog(code);
-                codeInput.value = '';
-
+                const result = await response.json();
+        
+                if (result.status === "exists") {
+                    Swal.fire({
+                        title: '¡Ya registrado!',
+                        html: `EL ACTIVO YA SE ENCUENTRA EN EL REGISTRO TAL DIA Y TAL HORA <br><b>${result.date} - ${result.time}</b>`,
+                        icon: 'warning'
+                    });
+                } else if (result.status === "success") {
+                    Swal.fire('¡Éxito!', 'ACTIVO REGISTRADO CON ÉXITO', 'success');
+                    addLog(code); // Añade a la lista visual
+                    codeInput.value = '';
+                }
             } catch (error) {
-                Swal.fire('Error', 'No se pudo conectar con la base de datos', 'error');
+                console.error(error);
+                Swal.fire('Error', 'Hubo un problema de conexión', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerText = "REGISTRAR ACTIVO";
