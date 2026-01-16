@@ -80,49 +80,90 @@
             </div>
         </div>
 
-        <div id="view-manage" class="hidden space-y-6 pt-8">
-            <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
-                <p class="text-[10px] text-indigo-500 font-bold mb-2 uppercase">Buscador Rápido</p>
-                <div class="flex gap-2">
-                    <input type="text" id="search-code" placeholder="DIGITE NÚMERO..." class="flex-1 p-3 border rounded-xl uppercase font-mono outline-none text-sm">
-                    <button onclick="searchAsset()" id="btn-search" class="bg-indigo-600 text-white px-4 rounded-xl font-bold italic text-sm flex items-center transition-all">
-                        <span id="txt-search">BUSCAR</span>
+        
+        <div id="view-manage" class="hidden space-y-6">
+        
+            <!-- BLOQUE STICKY -->
+            <div class="sticky top-0 z-20 bg-white pt-6 pb-6 space-y-6 rounded-b-2xl">
+        
+                <!-- BUSCADOR -->
+                <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
+                    <p class="text-[10px] text-indigo-500 font-bold mb-2 uppercase">
+                        Buscador Rápido
+                    </p>
+                    <div class="flex gap-2">
+                        <input type="text" id="search-code" placeholder="DIGITE NÚMERO..."
+                            class="flex-1 p-3 border rounded-xl uppercase font-mono outline-none text-sm">
+                        <button onclick="searchAsset()" id="btn-search"
+                            class="bg-indigo-600 text-white px-4 rounded-xl font-bold italic text-sm flex items-center transition-all active:scale-95">
+                            <span id="txt-search">BUSCAR</span>
+                        </button>
+                    </div>
+                </div>
+        
+                <!-- TITULO TABLA -->
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                        Base de Datos Completa
+                    </h3>
+                    <button onclick="loadTable()"
+                        class="text-[10px] bg-white border px-2 py-1 rounded shadow-sm font-bold text-gray-500 hover:bg-gray-50">
+                        Actualizar Tabla
                     </button>
                 </div>
+        
             </div>
-            
-            <div id="search-result" class="hidden p-6 bg-white rounded-2xl border-2 border-indigo-200 shadow-sm space-y-4">
+        
+            <!-- RESULTADO DE BÚSQUEDA (TARJETA) -->
+            <div id="search-result" class="hidden p-6 bg-white rounded-2xl border-2 border-indigo-200 shadow-sm space-y-4 animate-in fade-in">
+        
                 <div class="text-center border-b pb-4 text-gray-800">
                     <h4 id="res-code" class="text-2xl font-black font-mono tracking-tighter"></h4>
                 </div>
+        
                 <div class="grid grid-cols-2 gap-4 text-[11px] uppercase font-bold">
-                    <div class="bg-gray-50 p-2 rounded"> <p class="text-gray-400">Fecha:</p> <p id="res-date"></p> </div>
-                    <div class="bg-gray-50 p-2 rounded"> <p class="text-gray-400">Hora:</p> <p id="res-time"></p> </div>
-                    <div class="col-span-2 bg-indigo-50 p-3 rounded text-center"> <p class="text-indigo-400">Registrado por:</p> <p id="res-user" class="text-indigo-700 text-sm"></p> </div>
+                    <div class="bg-gray-50 p-2 rounded">
+                        <p class="text-gray-400">Fecha:</p>
+                        <p id="res-date"></p>
+                    </div>
+                    <div class="bg-gray-50 p-2 rounded">
+                        <p class="text-gray-400">Hora:</p>
+                        <p id="res-time"></p>
+                    </div>
+                    <div class="col-span-2 bg-indigo-50 p-3 rounded text-center">
+                        <p class="text-indigo-400">Registrado por:</p>
+                        <p id="res-user" class="text-indigo-700 text-sm"></p>
+                    </div>
                 </div>
-                <button onclick="confirmDelete()" class="w-full bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-600 hover:text-white transition-all text-xs">ELIMINAR ESTE REGISTRO</button>
+        
+                <button onclick="confirmDelete()"
+                    class="w-full bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-600 hover:text-white transition-all text-xs">
+                    ELIMINAR ESTE REGISTRO
+                </button>
             </div>
-
-            <div class="mt-4">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Base de Datos Completa</h3>
-                    <button onclick="loadTable()" class="text-[10px] bg-white border px-2 py-1 rounded shadow-sm font-bold text-gray-500 hover:bg-gray-50">Actualizar Tabla</button>
-                </div>
-                <div class="overflow-x-auto rounded-xl border border-gray-100">
-                    <table class="w-full text-left bg-white text-[11px]">
-                        <thead class="bg-gray-50 border-b text-gray-400 uppercase italic">
-                            <tr>
-                                <th class="p-3">Activo</th>
-                                <th class="p-3">Responsable</th>
-                                <th class="p-3 text-right">Fecha/Hora</th>
-                                <th class="p-3 text-right">Acción</th> </tr>
-                        </thead>
-                        <tbody id="table-body" class="divide-y divide-gray-50">
-                            </tbody>
-                    </table>
-                </div>
+        
+            <!-- TABLA CON SCROLL -->
+            <div class="overflow-y-auto max-h-[60vh] rounded-xl border border-gray-100">
+                <table class="w-full text-left bg-white text-[11px]">
+                    <thead class="bg-gray-50 border-b text-gray-400 uppercase italic sticky top-0 z-10">
+                        <tr>
+                            <th class="p-3">Activo</th>
+                            <th class="p-3">Responsable</th>
+                            <th class="p-3 text-right">Fecha/Hora</th>
+                            <th class="p-3 text-right">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-gray-50"></tbody>
+                </table>
             </div>
+        
         </div>
+
+
+
+
+
+        
     </div>
 
 
