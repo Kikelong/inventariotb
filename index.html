@@ -96,7 +96,7 @@
                                 <th class="p-3">Activo</th>
                                 <th class="p-3">Responsable</th>
                                 <th class="p-3 text-right">Fecha/Hora</th>
-                            </tr>
+                                <th class="p-3 text-right">Acción</th> </tr>
                         </thead>
                         <tbody id="table-body" class="divide-y divide-gray-50">
                             </tbody>
@@ -199,26 +199,77 @@
         }
 
         async function loadTable() {
-            const body = document.getElementById('table-body');
-            body.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-gray-400 italic">Cargando datos...</td></tr>`;
+    const body = document.getElementById('table-body');
+    body.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-400 italic">Cargando datos...</td></tr>`;
 
-            try {
-                const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getAll', code: '' }) });
-                const res = await response.json();
+    try {
+        const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getAll', code: '' }) });
+        const res = await response.json();
 
-                if (res.status === "success") {
-                    body.innerHTML = "";
-                    res.data.reverse().slice(0, 50).forEach(item => { // Mostramos los últimos 50
-                        const row = `<tr>
-                            <td class="p-3 font-mono font-bold">${item.code}</td>
-                            <td class="p-3 text-indigo-500">${item.user}</td>
-                            <td class="p-3 text-right text-gray-400">${item.date}<br>${item.time}</td>
-                        </tr>`;
-                        body.innerHTML += row;
-                    });
-                }
-            } catch (e) { body.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-red-400">Error al cargar datos</td></tr>`; }
+        if (res.status === "success") {
+            body.innerHTML = "";
+            // Invertimos para ver los más nuevos primero
+            res.data.reverse().forEach(item => {
+                const row = document.createElement('tr');
+                row.className = "border-b border-gray-50 hover:bg-red-50 transition-colors group";
+                row.innerHTML = `
+                    <td class="p-3 font-mono font-bold text-gray-700">${item.code}</td>
+                    <td class="p-3 text-indigo-500">${item.user}</td>
+                    <td class="p-3 text-right text-gray-400 text-[10px]">${item.date}<br>${item.time}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="deleteDirect('${item.code}')" class="text-gray-300 group-hover:text-red-500 transition-colors p-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </td>
+                `;
+                body.appendChild(row);
+            });
         }
+    } catch (e) { 
+        body.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-red-400">Error al cargar datos</td></tr>`; 
+    }
+}
+
+// Nueva función para borrar directamente desde la tabla
+async function deleteDirect(code) {
+    const confirm = await Swal.fire({
+        title: '¿Eliminar registro?',
+        text: `Vas a borrar el activo ${code} de la base de datos.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (confirm.isConfirmed) {
+        // Mostrar carga en la tabla mientras borra
+        Swal.showLoading();
+        
+        try {
+            const response = await fetch(WEB_APP_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'delete', code: code }) 
+            });
+            const res = await response.json();
+
+            if (res.status === "deleted") {
+                Swal.fire({
+                    title: '¡Borrado!',
+                    icon: 'success',
+                    timer: 1000,
+                    showConfirmButton: false
+                });
+                loadTable(); // Recargar la tabla automáticamente
+            }
+        } catch (e) {
+            Swal.fire('Error', 'No se pudo eliminar', 'error');
+        }
+    }
+}
 
         async function confirmDelete() {
             const code = document.getElementById('res-code').innerText;
