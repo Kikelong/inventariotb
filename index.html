@@ -250,7 +250,10 @@
         return { f: s, h: "" };
     }
 
-    async function registerAsset() {
+    
+
+
+async function registerAsset() {
         const input = document.getElementById('asset-code');
         const code = input.value.trim().toUpperCase();
         const btn = document.getElementById('btn-register');
@@ -258,39 +261,92 @@
 
         if (!code) return;
 
-        // CAPTURAR HORA LOCAL DE COLOMBIA
-        const ahora = new Date();
-        const localDate = ahora.toLocaleDateString('en-CA'); // YYYY-MM-DD
-        const localTime = ahora.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-
         btn.disabled = true;
-        txt.innerHTML = `<span class="spinner"></span> REGISTRANDO...`;
+        txt.innerHTML = `<span class="spinner"></span> VERIFICANDO...`;
 
         try {
+            // PASO 1: Verificar si ya existe (usamos la acción 'search' que ya tienes)
+            const checkRes = await fetch(WEB_APP_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'search', code: code }) 
+            });
+            const checkData = await checkRes.json();
+
+            // Si el status es 'found', significa que ya existe un registro con ese código exacto
+            // Nota: La acción 'search' hace coincidencia parcial, así que verificamos exactitud:
+            const exactMatch = checkData.status === "found" && checkData.data.some(item => item.code === code);
+
+            if (exactMatch) {
+                Swal.fire({ icon: 'error', title: 'YA EXISTE', text: `El activo ${code} ya está registrado.` });
+                btn.disabled = false;
+                txt.innerHTML = `REGISTRAR AHORA`;
+                return;
+            }
+
+            // PASO 2: Si no existe, preguntar el TIPO con un menú
+            const { value: tipoActivo } = await Swal.fire({
+                title: 'Seleccione Tipo de Activo',
+                input: 'select',
+                inputOptions: {
+                    'ATB': 'ATB',
+                    'BTP': 'BTP',
+                    'WGE (OCR)': 'WGE (OCR)',
+                    'BGR': 'BGR',
+                    'DCP': 'DCP'
+                },
+                inputPlaceholder: '-- Seleccione un tipo --',
+                showCancelButton: true,
+                confirmButtonColor: '#4f46e5',
+                inputValidator: (value) => {
+                    if (!value) return 'Debes seleccionar un tipo';
+                }
+            });
+
+            if (!tipoActivo) {
+                btn.disabled = false;
+                txt.innerHTML = `REGISTRAR AHORA`;
+                return;
+            }
+
+            // PASO 3: Registrar con el tipo seleccionado
+            txt.innerHTML = `<span class="spinner"></span> GUARDANDO...`;
+            const ahora = new Date();
+            const localDate = ahora.toLocaleDateString('en-CA');
+            const localTime = ahora.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
             const response = await fetch(WEB_APP_URL, { 
                 method: 'POST', 
                 body: JSON.stringify({ 
                     code: code, 
                     user: currentUser,
-                    manualDate: localDate, // Enviamos la fecha de tu equipo
-                    manualTime: localTime  // Enviamos la hora de tu equipo
+                    tipo: tipoActivo, // Enviamos el tipo elegido
+                    manualDate: localDate,
+                    manualTime: localTime 
                 }) 
             });
             const res = await response.json();
 
-            if (res.status === "exists") {
-                Swal.fire({ icon: 'error', title: 'YA EXISTE', text: `Registrado anteriormente.` });
-            } else {
+            if (res.status === "success") {
                 Swal.fire({ icon: 'success', title: 'REGISTRADO', timer: 1000, showConfirmButton: false });
                 addLog(code);
                 input.value = '';
+                loadTable(); // Actualiza la tabla automáticamente
             }
-        } catch (e) { Swal.fire('Error', 'Sin conexión', 'error'); }
+            
+        } catch (e) { 
+            Swal.fire('Error', 'Sin conexión con la base de datos', 'error');
+        }
         
         btn.disabled = false;
         txt.innerHTML = `REGISTRAR AHORA`;
         input.focus();
     }
+
+
+
+
+
+    
 
     async function searchAsset() {
         const input = document.getElementById('search-code');
