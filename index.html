@@ -195,27 +195,58 @@
     }
 
     async function searchAsset() {
-        const code = document.getElementById('search-code').value.trim().toUpperCase();
+        const input = document.getElementById('search-code');
+        const code = input.value.trim().toUpperCase();
         const resDiv = document.getElementById('search-result');
+        const btn = document.getElementById('btn-search');
+        const txt = document.getElementById('txt-search');
+
         if (!code) return;
 
+        // Feedback visual: Botón cargando
+        btn.disabled = true;
+        const originalText = txt.innerHTML;
+        txt.innerHTML = `<span class="spinner"></span> BUSCANDO...`;
+        resDiv.classList.add('hidden');
+
         try {
-            const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'search', code: code }) });
+            const response = await fetch(WEB_APP_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'search', code: code }) 
+            });
             const res = await response.json();
 
             if (res.status === "found") {
-                resDiv.innerHTML = "";
+                resDiv.innerHTML = `<p class="text-[10px] text-gray-400 mb-3">${res.data.length} resultado(s) encontrado(s):</p>`;
+                
                 res.data.forEach(item => {
+                    // Usamos tu función formatSimple para las fechas
                     const info = formatSimple(item.date + 'T' + item.time);
                     const card = document.createElement('div');
-                    card.className = "p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 mb-2 flex justify-between items-center";
-                    card.innerHTML = `<div><p class="font-mono font-black">${item.code}</p><p class="text-[9px]">👤 ${item.user} | 📅 ${info.f} - ${info.h}</p></div>
-                        <button onclick="deleteDirect('${item.code}')" class="text-red-500 p-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
+                    card.className = "p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 mb-2 flex justify-between items-center animate-in slide-in-from-top-2";
+                    card.innerHTML = `
+                        <div>
+                            <p class="font-mono font-black text-indigo-900">${item.code}</p>
+                            <p class="text-[9px] text-gray-600">👤 ${item.user} | 📅 ${info.f} - ${info.h}</p>
+                        </div>
+                        <button onclick="deleteDirect('${item.code}')" class="text-red-400 hover:text-red-600 p-2 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>`;
                     resDiv.appendChild(card);
                 });
                 resDiv.classList.remove('hidden');
-            } else { Swal.fire('No encontrado', '', 'info'); }
-        } catch (e) { }
+            } else { 
+                Swal.fire({ icon: 'info', title: 'Sin coincidencias', text: `No hay registros que contengan "${code}"` }); 
+            }
+        } catch (e) { 
+            Swal.fire('Error', 'Error al conectar con la base de datos', 'error');
+        } finally {
+            // Restaurar botón
+            btn.disabled = false;
+            txt.innerHTML = originalText;
+        }
     }
 
     async function loadTable() {
