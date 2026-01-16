@@ -1,1 +1,132 @@
-hola mundo
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario Activos Fijos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="login-screen" class="max-w-md mx-auto mt-20 glass p-8 rounded-2xl shadow-2xl">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Registro de Personal</h2>
+        <p class="text-gray-600 mb-4 text-sm text-center">Selecciona tu nombre para comenzar</p>
+        <select id="user-name" class="w-full p-3 border rounded-lg mb-4 bg-white outline-none focus:ring-2 focus:ring-purple-500">
+            <option value="">Seleccionar responsable...</option>
+            <option value="Operador 1">Operador 1</option>
+            <option value="Operador 2">Operador 2</option>
+            <option value="Operador 3">Operador 3</option>
+            </select>
+        <button onclick="login()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg transition">Ingresar al Sistema</button>
+    </div>
+
+    <div id="inventory-screen" class="hidden max-w-2xl mx-auto glass p-8 rounded-2xl shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">Registro de Activos</h1>
+                <p id="display-user" class="text-purple-600 font-medium"></p>
+            </div>
+            <button onclick="logout()" class="text-xs text-red-500 underline">Cerrar Sesión</button>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Código del Activo (Alfanumérico)</label>
+                <input type="text" id="asset-code" placeholder="Ej: AC-88234-X" class="w-full p-4 border rounded-lg uppercase font-mono text-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <button onclick="registerAsset()" id="btn-register" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-lg text-lg transition shadow-lg">
+                REGISTRAR ACTIVO
+            </button>
+        </div>
+
+        <div class="mt-8 border-t pt-6">
+            <h3 class="text-sm font-bold text-gray-500 uppercase mb-4">Últimos Registros Local</h3>
+            <div id="log-list" class="space-y-2 max-h-60 overflow-y-auto text-sm">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = "TU_URL_DE_GOOGLE_APPS_SCRIPT"; // PASO 2 ABAJO
+        let currentUser = localStorage.getItem('activeUser');
+
+        window.onload = () => {
+            if (currentUser) showInventory();
+        };
+
+        function login() {
+            const name = document.getElementById('user-name').value;
+            if (!name) return Swal.fire('Error', 'Selecciona un nombre', 'error');
+            localStorage.setItem('activeUser', name);
+            currentUser = name;
+            showInventory();
+        }
+
+        function logout() {
+            localStorage.removeItem('activeUser');
+            location.reload();
+        }
+
+        function showInventory() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('inventory-screen').classList.remove('hidden');
+            document.getElementById('display-user').innerText = `Responsable: ${currentUser}`;
+        }
+
+        async function registerAsset() {
+            const codeInput = document.getElementById('asset-code');
+            const code = codeInput.value.trim().toUpperCase();
+            const btn = document.getElementById('btn-register');
+
+            if (!code) return Swal.fire('Atención', 'Ingresa un código válido', 'warning');
+
+            btn.disabled = true;
+            btn.innerText = "Verificando...";
+
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Para evitar problemas de CORS simples
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'register',
+                        code: code,
+                        user: currentUser
+                    })
+                });
+
+                // Como usamos no-cors no podemos leer la respuesta JSON directamente fácilmente, 
+                // pero aquí te doy la lógica para un flujo profesional con Google Sheets:
+                
+                // NOTA: Para una validación real de "ya existe", Google Sheets debe responder.
+                // Por ahora, simularemos el éxito. Abajo te explico cómo conectar el "Ya existe".
+                
+                Swal.fire('¡Éxito!', 'Activo registrado correctamente', 'success');
+                addLog(code);
+                codeInput.value = '';
+
+            } catch (error) {
+                Swal.fire('Error', 'No se pudo conectar con la base de datos', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "REGISTRAR ACTIVO";
+            }
+        }
+
+        function addLog(code) {
+            const list = document.getElementById('log-list');
+            const now = new Date();
+            const timeStr = `${now.toLocaleDateString()} - ${now.toLocaleTimeString()}`;
+            const entry = document.createElement('div');
+            entry.className = "bg-white p-3 rounded border-l-4 border-green-500 shadow-sm flex justify-between";
+            entry.innerHTML = `<span><strong>${code}</strong></span> <span class="text-gray-400 text-xs">${timeStr}</span>`;
+            list.prepend(entry);
+        }
+    </script>
+</body>
+</html>
