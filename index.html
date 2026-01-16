@@ -254,93 +254,113 @@
 
 
 async function registerAsset() {
-        const input = document.getElementById('asset-code');
-        const code = input.value.trim().toUpperCase();
-        const btn = document.getElementById('btn-register');
-        const txt = document.getElementById('txt-register');
+    const input = document.getElementById('asset-code');
+    const code = input.value.trim().toUpperCase();
+    const btn = document.getElementById('btn-register');
+    const txt = document.getElementById('txt-register');
 
-        if (!code) return;
+    // Si el input está vacío, no hacer nada
+    if (!code) return;
 
-        btn.disabled = true;
-        txt.innerHTML = `<span class="spinner"></span> VERIFICANDO...`;
+    // Bloquear botón y mostrar estado
+    btn.disabled = true;
+    txt.innerHTML = `<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span> VERIFICANDO...`;
 
-        try {
-            // PASO 1: Verificar si ya existe (usamos la acción 'search' que ya tienes)
-            const checkRes = await fetch(WEB_APP_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ action: 'search', code: code }) 
+    try {
+        // PASO 1: Verificar duplicados (usamos 'search' en el servidor)
+        const checkRes = await fetch(WEB_APP_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'search', code: code }) 
+        });
+        const checkData = await checkRes.json();
+
+        // Verificamos si hay una coincidencia exacta (comparando como texto)
+        const exactMatch = checkData.status === "found" && 
+                           checkData.data.some(item => item.code.toString().toUpperCase().trim() === code);
+
+        if (exactMatch) {
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'CÓDIGO DUPLICADO', 
+                text: `El activo ${code} ya se encuentra en la base de datos.`,
+                confirmButtonColor: '#4f46e5'
             });
-            const checkData = await checkRes.json();
-
-            // Si el status es 'found', significa que ya existe un registro con ese código exacto
-            // Nota: La acción 'search' hace coincidencia parcial, así que verificamos exactitud:
-            const exactMatch = checkData.status === "found" && checkData.data.some(item => item.code === code);
-
-            if (exactMatch) {
-                Swal.fire({ icon: 'error', title: 'YA EXISTE', text: `El activo ${code} ya está registrado.` });
-                btn.disabled = false;
-                txt.innerHTML = `REGISTRAR AHORA`;
-                return;
-            }
-
-            // PASO 2: Si no existe, preguntar el TIPO con un menú
-            const { value: tipoActivo } = await Swal.fire({
-                title: 'Seleccione Tipo de Activo',
-                input: 'select',
-                inputOptions: {
-                    'ATB': 'ATB',
-                    'BTP': 'BTP',
-                    'WGE (OCR)': 'WGE (OCR)',
-                    'BGR': 'BGR',
-                    'DCP': 'DCP'
-                },
-                inputPlaceholder: '-- Seleccione un tipo --',
-                showCancelButton: true,
-                confirmButtonColor: '#4f46e5',
-                inputValidator: (value) => {
-                    if (!value) return 'Debes seleccionar un tipo';
-                }
-            });
-
-            if (!tipoActivo) {
-                btn.disabled = false;
-                txt.innerHTML = `REGISTRAR AHORA`;
-                return;
-            }
-
-            // PASO 3: Registrar con el tipo seleccionado
-            txt.innerHTML = `<span class="spinner"></span> GUARDANDO...`;
-            const ahora = new Date();
-            const localDate = ahora.toLocaleDateString('en-CA');
-            const localTime = ahora.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-
-            const response = await fetch(WEB_APP_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ 
-                    code: code, 
-                    user: currentUser,
-                    tipo: tipoActivo, // Enviamos el tipo elegido
-                    manualDate: localDate,
-                    manualTime: localTime 
-                }) 
-            });
-            const res = await response.json();
-
-            if (res.status === "success") {
-                Swal.fire({ icon: 'success', title: 'REGISTRADO', timer: 1000, showConfirmButton: false });
-                addLog(code);
-                input.value = '';
-                loadTable(); // Actualiza la tabla automáticamente
-            }
-            
-        } catch (e) { 
-            Swal.fire('Error', 'Sin conexión con la base de datos', 'error');
+            resetBtn();
+            return;
         }
+
+        // PASO 2: Si es nuevo, preguntar el Tipo de Activo
+        const { value: tipoActivo } = await Swal.fire({
+            title: 'Seleccione Tipo de Activo',
+            text: `Registrando código: ${code}`,
+            input: 'select',
+            inputOptions: {
+                'ATB': 'ATB',
+                'BTP': 'BTP',
+                'WGE (OCR)': 'WGE (OCR)',
+                'BGR': 'BGR',
+                'DCP': 'DCP'
+            },
+            inputPlaceholder: '-- Seleccione un tipo --',
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Confirmar Registro',
+            confirmButtonColor: '#4f46e5',
+            inputValidator: (value) => {
+                if (!value) return 'Debes elegir un tipo para continuar';
+            }
+        });
+
+        // Si el usuario cancela la ventana de selección
+        if (!tipoActivo) {
+            resetBtn();
+            return;
+        }
+
+        // PASO 3: Enviar registro final al GS
+        txt.innerHTML = `<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span> GUARDANDO...`;
         
+        const response = await fetch(WEB_APP_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ 
+                code: code, 
+                user: currentUser,
+                tipo: tipoActivo // Enviamos el tipo seleccionado
+            }) 
+        });
+        
+        const res = await response.json();
+
+        if (res.status === "success") {
+            Swal.fire({ 
+                icon: 'success', 
+                title: 'REGISTRADO', 
+                text: `Activo ${code} (${tipoActivo}) guardado con éxito.`,
+                timer: 2000, 
+                showConfirmButton: false 
+            });
+            
+            if (typeof addLog === 'function') addLog(code);
+            input.value = '';
+            loadTable(); // Recarga la tabla para ver el nuevo registro
+        } else {
+            throw new Error(res.message);
+        }
+
+    } catch (e) {
+        console.error(e);
+        Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+    } finally {
+        resetBtn();
+    }
+
+    // Función interna para restablecer el botón
+    function resetBtn() {
         btn.disabled = false;
         txt.innerHTML = `REGISTRAR AHORA`;
         input.focus();
     }
+}
 
 
 
