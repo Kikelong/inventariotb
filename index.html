@@ -170,33 +170,65 @@
         }
 
         async function searchAsset() {
-            const code = document.getElementById('search-code').value.trim().toUpperCase();
-            const btn = document.getElementById('btn-search');
-            const txt = document.getElementById('txt-search');
-            if (!code) return;
+    const code = document.getElementById('search-code').value.trim().toUpperCase();
+    const btn = document.getElementById('btn-search');
+    const txt = document.getElementById('txt-search');
+    const resDiv = document.getElementById('search-result');
+    
+    if (!code) return;
 
-            btn.disabled = true;
-            txt.innerHTML = `<span class="spinner"></span>`;
+    btn.disabled = true;
+    txt.innerHTML = `<span class="spinner"></span>`;
+    resDiv.classList.add('hidden');
 
-            try {
-                const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'search', code: code }) });
-                const res = await response.json();
+    try {
+        const response = await fetch(WEB_APP_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'search', code: code }) 
+        });
+        const res = await response.json();
 
-                if (res.status === "found") {
-                    document.getElementById('res-code').innerText = code;
-                    document.getElementById('res-date').innerText = res.date;
-                    document.getElementById('res-time').innerText = res.time;
-                    document.getElementById('res-user').innerText = res.user;
-                    document.getElementById('search-result').classList.remove('hidden');
-                } else {
-                    Swal.fire('No encontrado', 'El activo no está registrado.', 'info');
-                    document.getElementById('search-result').classList.add('hidden');
-                }
-            } catch (e) { }
-
-            btn.disabled = false;
-            txt.innerText = "BUSCAR";
+        if (res.status === "short") {
+            Swal.fire('Escribe más', 'Ingresa al menos 2 caracteres para buscar', 'info');
+        } else if (res.status === "found") {
+            // Limpiamos el contenedor y creamos una lista de resultados
+            resDiv.innerHTML = `<p class="text-[10px] text-center font-bold text-indigo-400 mb-3 uppercase">${res.data.length} Coincidencia(s) encontrada(s)</p>`;
+            
+            res.data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 mb-3";
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-mono font-black text-lg text-gray-800">${item.code}</span>
+                        <button onclick="confirmDeleteFromSearch('${item.code}')" class="text-red-500 hover:bg-red-100 p-2 rounded-lg transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 text-[10px] text-gray-500 uppercase">
+                        <span>📅 ${item.date}</span>
+                        <span class="text-right">👤 ${item.user}</span>
+                    </div>
+                `;
+                resDiv.appendChild(card);
+            });
+            resDiv.classList.remove('hidden');
+        } else {
+            Swal.fire('No encontrado', 'Ningún activo contiene ese texto', 'info');
         }
+    } catch (e) {
+        Swal.fire('Error', 'Error al buscar', 'error');
+    }
+
+    btn.disabled = false;
+    txt.innerText = "BUSCAR";
+}
+
+// Función auxiliar para borrar desde la búsqueda
+async function confirmDeleteFromSearch(code) {
+    // Reutilizamos la lógica de confirmDelete que ya tienes
+    document.getElementById('res-code').innerText = code; 
+    confirmDelete(); 
+}
 
         async function loadTable() {
     const body = document.getElementById('table-body');
