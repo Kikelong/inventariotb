@@ -78,107 +78,189 @@
         
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4">
+
         <div class="fixed-header">
-            INVENTARIO TB - v2.3
+
+            INVENTARIO TB - v2.5
+
         </div>
+
     <div id="login-screen" class="w-full max-w-md glass p-8 rounded-3xl shadow-2xl">
+
         <div class="text-center mb-8">
+
             <h2 class="text-3xl font-bold text-gray-800">Inventario TB</h2>
+
             <p class="text-gray-500 mt-2">Identifícate para continuar</p>
+
         </div>
+
         <select id="user-name" class="w-full p-4 bg-white border rounded-xl mb-4 outline-none focus:ring-2 focus:ring-indigo-500">
+
             <option value="">-- Elige un responsable --</option>
+
             <option value="ELTON LARA">ELTON LARA</option>
+
             <option value="JHON AVILA">JHON AVILA</option>
+
             <option value="CRISTIAN ESCORCIA">CRISTIAN ESCORCIA</option>
+
             <option value="SAMIR VITOLA">SAMIR VITOLA</option>
+
             <option value="JESUS GASSE">JESUS GASSE</option>
+
             <option value="SERGIO OSORIO">SERGIO OSORIO</option>
+
             <option value="MAURICIO CARDONA">MAURICIO CARDONA</option>
+
             <option value="CARLOS PAJARO">CARLOS PAJARO</option>
+
             <option value="ELIECER CRUZ">ELIECER CRUZ</option>
+
         </select>
+
         <button onclick="login()" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg">INICIAR SESIÓN</button>
+
     </div>
 
 
-            <div id="inventory-screen" class="hidden w-full max-w-2xl glass p-6 rounded-3xl shadow-2xl transition-all flex flex-col">
-                
-                <div class="flex justify-between items-center mb-6">
-                    <p id="display-user" class="text-indigo-600 font-bold text-sm uppercase tracking-wider"></p>
-                    <button onclick="logout()" class="text-red-400 text-xs font-bold uppercase hover:underline">Cerrar Sesión</button>
-                </div>
+
+    <div id="inventory-screen" class="hidden w-full max-w-2xl glass p-6 rounded-3xl shadow-2xl transition-all">
+
+        <div class="flex justify-between items-center mb-6">
+
+            <p id="display-user" class="text-indigo-600 font-bold text-sm uppercase tracking-wider"></p>
+
+            <button onclick="logout()" class="text-red-400 text-xs font-bold uppercase hover:underline">Cerrar Sesión</button>
+
+        </div>
+
+
+
+        <div class="flex border-b mb-6 text-sm font-bold text-gray-400 uppercase tracking-widest">
+
+            <button onclick="switchTab('reg')" id="tab-reg" class="flex-1 pb-3 tab-active">Registrar</button>
+
+            <button onclick="switchTab('manage')" id="tab-manage" class="flex-1 pb-3">Gestión / Base de Datos</button>
+
+        </div>
+
+
+
+        <div id="view-reg" class="space-y-6 animate-in fade-in">
+
+            <input type="text" id="asset-code" placeholder="NO. DE ACTIVO" class="w-full p-5 border rounded-2xl text-2xl font-mono uppercase focus:ring-4 focus:ring-indigo-100 outline-none">
+
+            <button onclick="registerAsset()" id="btn-register" class="w-full bg-emerald-500 text-white font-extrabold py-5 rounded-2xl text-xl shadow-lg transition-all active:scale-95 flex justify-center items-center">
+
+                <span id="txt-register">REGISTRAR AHORA</span>
+
+            </button>
+
             
-                <div class="flex border-b mb-6 text-sm font-bold text-gray-400 uppercase tracking-widest">
-                    <button onclick="switchTab('reg')" id="tab-reg" class="flex-1 pb-3 tab-active">Registrar</button>
-                    <button onclick="switchTab('manage')" id="tab-manage" class="flex-1 pb-3">Gestión / Base de Datos</button>
-                </div>
-            
-                <div id="view-reg" class="flex-1 flex flex-col justify-center space-y-6 animate-in fade-in py-8">
-                    <input type="text" id="asset-code" placeholder="NO. DE ACTIVO" class="w-full p-5 border rounded-2xl text-2xl font-mono uppercase focus:ring-4 focus:ring-indigo-100 outline-none">
-                    <button onclick="registerAsset()" id="btn-register" class="w-full bg-emerald-500 text-white font-extrabold py-5 rounded-2xl text-xl shadow-lg transition-all active:scale-95 flex justify-center items-center">
-                        <span id="txt-register">REGISTRAR AHORA</span>
-                    </button>
-                    
-                    <div class="mt-6 text-left">
-                        <h3 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-widest">Mis Registros Recientes</h3>
-                        <div id="log-list" class="space-y-2"></div>
-                    </div>
-                </div>
-            
-                <div id="view-manage" class="hidden space-y-6">
-                    </div>
+
+            <div class="mt-6">
+
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-widest">Mis Registros Recientes</h3>
+
+                <div id="log-list" class="space-y-2"></div>
+
             </div>
 
+        </div>
 
 
-    
 
         <div id="view-manage" class="hidden space-y-6">
+
             <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
+
                 <p class="text-[10px] text-indigo-500 font-bold mb-2 uppercase">Buscador Rápido</p>
+
                 <div class="flex gap-2">
+
                     <input type="text" id="search-code" placeholder="DIGITE NÚMERO..." class="flex-1 p-3 border rounded-xl uppercase font-mono outline-none text-sm">
+
                     <button onclick="searchAsset()" id="btn-search" class="bg-indigo-600 text-white px-4 rounded-xl font-bold italic text-sm flex items-center transition-all">
+
                         <span id="txt-search">BUSCAR</span>
+
                     </button>
+
                 </div>
-            </div>
-            
-            <div id="search-result" class="hidden p-6 bg-white rounded-2xl border-2 border-indigo-200 shadow-sm space-y-4">
-                <div class="text-center border-b pb-4 text-gray-800">
-                    <h4 id="res-code" class="text-2xl font-black font-mono tracking-tighter"></h4>
-                </div>
-                <div class="grid grid-cols-2 gap-4 text-[11px] uppercase font-bold">
-                    <div class="bg-gray-50 p-2 rounded"> <p class="text-gray-400">Fecha:</p> <p id="res-date"></p> </div>
-                    <div class="bg-gray-50 p-2 rounded"> <p class="text-gray-400">Hora:</p> <p id="res-time"></p> </div>
-                    <div class="col-span-2 bg-indigo-50 p-3 rounded text-center"> <p class="text-indigo-400">Registrado por:</p> <p id="res-user" class="text-indigo-700 text-sm"></p> </div>
-                </div>
-                <button onclick="confirmDelete()" class="w-full bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-600 hover:text-white transition-all text-xs">ELIMINAR ESTE REGISTRO</button>
+
             </div>
 
-            <div class="mt-4">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Base de Datos Completa</h3>
-                    <button onclick="loadTable()" class="text-[10px] bg-white border px-2 py-1 rounded shadow-sm font-bold text-gray-500 hover:bg-gray-50">Actualizar Tabla</button>
+            
+
+            <div id="search-result" class="hidden p-6 bg-white rounded-2xl border-2 border-indigo-200 shadow-sm space-y-4">
+
+                <div class="text-center border-b pb-4 text-gray-800">
+
+                    <h4 id="res-code" class="text-2xl font-black font-mono tracking-tighter"></h4>
+
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-gray-100">
-                    <table class="w-full text-left bg-white text-[11px]">
-                        <thead class="bg-gray-50 border-b text-gray-400 uppercase italic">
-                            <tr>
-                                <th class="p-3">Activo</th>
-                                <th class="p-3">Responsable</th>
-                                <th class="p-3 text-right">Fecha/Hora</th>
-                                <th class="p-3 text-right">Acción</th> </tr>
-                        </thead>
-                        <tbody id="table-body" class="divide-y divide-gray-50">
-                            </tbody>
-                    </table>
+
+                <div class="grid grid-cols-2 gap-4 text-[11px] uppercase font-bold">
+
+                    <div class="bg-gray-50 p-2 rounded"> <p class="text-gray-400">Fecha:</p> <p id="res-date"></p> </div>
+
+                    <div class="bg-gray-50 p-2 rounded"> <p class="text-gray-400">Hora:</p> <p id="res-time"></p> </div>
+
+                    <div class="col-span-2 bg-indigo-50 p-3 rounded text-center"> <p class="text-indigo-400">Registrado por:</p> <p id="res-user" class="text-indigo-700 text-sm"></p> </div>
+
                 </div>
+
+                <button onclick="confirmDelete()" class="w-full bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-600 hover:text-white transition-all text-xs">ELIMINAR ESTE REGISTRO</button>
+
             </div>
+
+
+
+            <div class="mt-4">
+
+                <div class="flex justify-between items-center mb-3">
+
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Base de Datos Completa</h3>
+
+                    <button onclick="loadTable()" class="text-[10px] bg-white border px-2 py-1 rounded shadow-sm font-bold text-gray-500 hover:bg-gray-50">Actualizar Tabla</button>
+
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-gray-100">
+
+                    <table class="w-full text-left bg-white text-[11px]">
+
+                        <thead class="bg-gray-50 border-b text-gray-400 uppercase italic">
+
+                            <tr>
+
+                                <th class="p-3">Activo</th>
+
+                                <th class="p-3">Responsable</th>
+
+                                <th class="p-3 text-right">Fecha/Hora</th>
+
+                                <th class="p-3 text-right">Acción</th> </tr>
+
+                        </thead>
+
+                        <tbody id="table-body" class="divide-y divide-gray-50">
+
+                            </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
         </div>
+
     </div>
+
+
 
 
 
