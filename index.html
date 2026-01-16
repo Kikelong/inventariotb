@@ -105,234 +105,185 @@
             </div>
         </div>
     </div>
+<script>
+    // 1. CONFIGURACIÓN INICIAL
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwTXgHqYWUjfbl6BUWY38EoXq2vP3gysNTUtp7GqkbQazE8waOmy8uzHcmqRLkcKIadXg/exec";
+    let currentUser = localStorage.getItem('activeUser');
 
-    <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwTXgHqYWUjfbl6BUWY38EoXq2vP3gysNTUtp7GqkbQazE8waOmy8uzHcmqRLkcKIadXg/exec";
-        let currentUser = localStorage.getItem('activeUser');
+    window.onload = () => { if (currentUser) showInventory(); };
 
-        window.onload = () => { if (currentUser) showInventory(); };
-
-        function login() {
-            const name = document.getElementById('user-name').value;
-            if (!name) return Swal.fire('Error', 'Elige un nombre', 'error');
-            localStorage.setItem('activeUser', name);
-            currentUser = name;
-            showInventory();
-        }
-
-        function logout() { localStorage.removeItem('activeUser'); location.reload(); }
-
-        function showInventory() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('inventory-screen').classList.remove('hidden');
-            document.getElementById('display-user').innerText = `👤 ${currentUser}`;
-            loadTable(); // Cargar la tabla al iniciar
-        }
-
-        function switchTab(tab) {
-            document.getElementById('view-reg').classList.toggle('hidden', tab !== 'reg');
-            document.getElementById('view-manage').classList.toggle('hidden', tab !== 'manage');
-            document.getElementById('tab-reg').classList.toggle('tab-active', tab === 'reg');
-            document.getElementById('tab-manage').classList.toggle('tab-active', tab === 'manage');
-            if(tab === 'manage') loadTable();
-        }
-
-        async function registerAsset() {
-            const input = document.getElementById('asset-code');
-            const code = input.value.trim().toUpperCase();
-            const btn = document.getElementById('btn-register');
-            const txt = document.getElementById('txt-register');
-
-            if (!code) return;
-
-            // Bloqueo de botón
-            btn.disabled = true;
-            btn.classList.replace('bg-emerald-500', 'bg-gray-400');
-            txt.innerHTML = `<span class="spinner"></span> REGISTRANDO...`;
-
-            try {
-                const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ code: code, user: currentUser }) });
-                const res = await response.json();
-
-                if (res.status === "exists") {
-                    Swal.fire({ icon: 'error', title: 'ACTIVO YA REGISTRADO', html: `REGISTRO: <b>${res.date} - ${res.time}</b>` });
-                } else {
-                    Swal.fire({ icon: 'success', title: 'REGISTRADO CON ÉXITO', timer: 1500, showConfirmButton: false });
-                    addLog(code);
-                    input.value = '';
-                }
-            } catch (e) { Swal.fire('Error', 'Sin conexión', 'error'); }
-            
-            btn.disabled = false;
-            btn.classList.replace('bg-gray-400', 'bg-emerald-500');
-            txt.innerHTML = `REGISTRAR AHORA`;
-            input.focus();
-        }
-
-        async function searchAsset() {
-    const code = document.getElementById('search-code').value.trim().toUpperCase();
-    const btn = document.getElementById('btn-search');
-    const txt = document.getElementById('txt-search');
-    const resDiv = document.getElementById('search-result');
-    
-    if (!code) return;
-
-    btn.disabled = true;
-    txt.innerHTML = `<span class="spinner"></span>`;
-    resDiv.classList.add('hidden');
-
-    try {
-        const response = await fetch(WEB_APP_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({ action: 'search', code: code }) 
-        });
-        const res = await response.json();
-
-        if (res.status === "short") {
-            Swal.fire('Escribe más', 'Ingresa al menos 2 caracteres para buscar', 'info');
-        } else if (res.status === "found") {
-            // Limpiamos el contenedor y creamos una lista de resultados
-            resDiv.innerHTML = `<p class="text-[10px] text-center font-bold text-indigo-400 mb-3 uppercase">${res.data.length} Coincidencia(s) encontrada(s)</p>`;
-            
-            res.data.forEach(item => {
-                const card = document.createElement('div');
-                card.className = "p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 mb-3";
-                card.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="font-mono font-black text-lg text-gray-800">${item.code}</span>
-                        <button onclick="confirmDeleteFromSearch('${item.code}')" class="text-red-500 hover:bg-red-100 p-2 rounded-lg transition-all">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    </div>
-                    <div class="grid grid-cols-2 text-[10px] text-gray-500 uppercase">
-                        <span>📅 ${item.date}</span>
-                        <span class="text-right">👤 ${item.user}</span>
-                    </div>
-                `;
-                resDiv.appendChild(card);
-            });
-            resDiv.classList.remove('hidden');
-        } else {
-            Swal.fire('No encontrado', 'Ningún activo contiene ese texto', 'info');
-        }
-    } catch (e) {
-        Swal.fire('Error', 'Error al buscar', 'error');
+    // 2. GESTIÓN DE SESIÓN
+    function login() {
+        const name = document.getElementById('user-name').value;
+        if (!name) return Swal.fire('Error', 'Elige un nombre', 'error');
+        localStorage.setItem('activeUser', name);
+        currentUser = name;
+        showInventory();
     }
 
-    btn.disabled = false;
-    txt.innerText = "BUSCAR";
-}
+    function logout() { localStorage.removeItem('activeUser'); location.reload(); }
 
-// Función auxiliar para borrar desde la búsqueda
-async function confirmDeleteFromSearch(code) {
-    // Reutilizamos la lógica de confirmDelete que ya tienes
-    document.getElementById('res-code').innerText = code; 
-    confirmDelete(); 
-}
-
-        async function loadTable() {
-    const body = document.getElementById('table-body');
-    body.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-400 italic">Cargando datos...</td></tr>`;
-
-    try {
-        const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getAll', code: '' }) });
-        const res = await response.json();
-
-        if (res.status === "success") {
-            body.innerHTML = "";
-            // Invertimos para ver los más nuevos primero
-            res.data.reverse().forEach(item => {
-                const row = document.createElement('tr');
-                row.className = "border-b border-gray-50 hover:bg-red-50 transition-colors group";
-                row.innerHTML = `
-                    <td class="p-3 font-mono font-bold text-gray-700">${item.code}</td>
-                    <td class="p-3 text-indigo-500">${item.user}</td>
-                    <td class="p-3 text-right text-gray-400 text-[10px]">${item.date}<br>${item.time}</td>
-                    <td class="p-3 text-right">
-                        <button onclick="deleteDirect('${item.code}')" class="text-gray-300 group-hover:text-red-500 transition-colors p-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
-                        </button>
-                    </td>
-                `;
-                body.appendChild(row);
-            });
-        }
-    } catch (e) { 
-        body.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-red-400">Error al cargar datos</td></tr>`; 
+    function showInventory() {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('inventory-screen').classList.remove('hidden');
+        document.getElementById('display-user').innerText = `👤 ${currentUser}`;
+        loadTable();
     }
-}
 
-// Nueva función para borrar directamente desde la tabla
-async function deleteDirect(code) {
-    const confirm = await Swal.fire({
-        title: '¿Eliminar registro?',
-        text: `Vas a borrar el activo ${code} de la base de datos.`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-    });
+    function switchTab(tab) {
+        document.getElementById('view-reg').classList.toggle('hidden', tab !== 'reg');
+        document.getElementById('view-manage').classList.toggle('hidden', tab !== 'manage');
+        document.getElementById('tab-reg').classList.toggle('tab-active', tab === 'reg');
+        document.getElementById('tab-manage').classList.toggle('tab-active', tab === 'manage');
+        if(tab === 'manage') {
+            loadTable();
+            document.getElementById('search-result').classList.add('hidden');
+            document.getElementById('search-code').value = '';
+        }
+    }
 
-    if (confirm.isConfirmed) {
-        // Mostrar carga en la tabla mientras borra
-        Swal.showLoading();
-        
+    // 3. REGISTRO DE ACTIVOS
+    async function registerAsset() {
+        const input = document.getElementById('asset-code');
+        const code = input.value.trim().toUpperCase();
+        const btn = document.getElementById('btn-register');
+        const txt = document.getElementById('txt-register');
+
+        if (!code) return;
+
+        btn.disabled = true;
+        btn.classList.replace('bg-emerald-500', 'bg-gray-400');
+        txt.innerHTML = `<span class="spinner"></span> REGISTRANDO...`;
+
         try {
-            const response = await fetch(WEB_APP_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ action: 'delete', code: code }) 
-            });
+            const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ code: code, user: currentUser }) });
             const res = await response.json();
 
-            if (res.status === "deleted") {
-                Swal.fire({
-                    title: '¡Borrado!',
-                    icon: 'success',
-                    timer: 1000,
-                    showConfirmButton: false
-                });
-                loadTable(); // Recargar la tabla automáticamente
+            if (res.status === "exists") {
+                Swal.fire({ icon: 'error', title: 'YA REGISTRADO', html: `REGISTRO: <b>${res.date} - ${res.time}</b>` });
+            } else {
+                Swal.fire({ icon: 'success', title: 'REGISTRADO', timer: 1500, showConfirmButton: false });
+                addLog(code);
+                input.value = '';
             }
-        } catch (e) {
-            Swal.fire('Error', 'No se pudo eliminar', 'error');
-        }
+        } catch (e) { Swal.fire('Error', 'Sin conexión', 'error'); }
+        
+        btn.disabled = false;
+        btn.classList.replace('bg-gray-400', 'bg-emerald-500');
+        txt.innerHTML = `REGISTRAR AHORA`;
+        input.focus();
     }
-}
 
-        async function confirmDelete() {
-            const code = document.getElementById('res-code').innerText;
-            const confirm = await Swal.fire({ 
-                title: '¿Confirmar Borrado?', 
-                text: `Se borrará el activo ${code} de forma permanente.`, 
-                icon: 'warning', 
-                showCancelButton: true, 
-                confirmButtonText: 'ELIMINAR', 
-                confirmButtonColor: '#dc2626' 
-            });
+    // 4. BÚSQUEDA Y ELIMINACIÓN (CORREGIDO)
+    async function searchAsset() {
+        const code = document.getElementById('search-code').value.trim().toUpperCase();
+        const btn = document.getElementById('btn-search');
+        const txt = document.getElementById('txt-search');
+        const resDiv = document.getElementById('search-result');
+        
+        if (!code) return;
 
-            if (confirm.isConfirmed) {
+        btn.disabled = true;
+        txt.innerHTML = `<span class="spinner"></span>`;
+        resDiv.classList.add('hidden');
+
+        try {
+            const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'search', code: code }) });
+            const res = await response.json();
+
+            if (res.status === "found") {
+                resDiv.innerHTML = `<p class="text-[10px] text-center font-bold text-indigo-400 mb-3 uppercase">${res.data.length} Encontrado(s)</p>`;
+                res.data.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = "p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 mb-2 flex justify-between items-center";
+                    card.innerHTML = `
+                        <div>
+                            <p class="font-mono font-black text-gray-800">${item.code}</p>
+                            <p class="text-[9px] text-gray-500 uppercase">👤 ${item.user} | 📅 ${item.date}</p>
+                        </div>
+                        <button onclick="deleteDirect('${item.code}')" class="text-red-500 p-2 hover:bg-red-100 rounded-lg transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    `;
+                    resDiv.appendChild(card);
+                });
+                resDiv.classList.remove('hidden');
+            } else if (res.status === "short") {
+                Swal.fire('Escribe más', 'Ingresa al menos 2 caracteres', 'info');
+            } else {
+                Swal.fire('No encontrado', 'No hay coincidencias', 'info');
+            }
+        } catch (e) { Swal.fire('Error', 'Fallo en búsqueda', 'error'); }
+
+        btn.disabled = false;
+        txt.innerText = "BUSCAR";
+    }
+
+    async function deleteDirect(code) {
+        const confirm = await Swal.fire({
+            title: '¿Eliminar activo?',
+            text: `Código: ${code}`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'ELIMINAR',
+            cancelButtonText: 'VOLVER'
+        });
+
+        if (confirm.isConfirmed) {
+            Swal.fire({ title: 'Borrando...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            try {
                 const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', code: code }) });
                 const res = await response.json();
                 if (res.status === "deleted") {
-                    Swal.fire('Eliminado', '', 'success');
-                    document.getElementById('search-result').classList.add('hidden');
+                    Swal.fire({ icon: 'success', title: 'Borrado', timer: 1000, showConfirmButton: false });
                     loadTable();
+                    document.getElementById('search-result').classList.add('hidden');
+                    document.getElementById('search-code').value = '';
                 }
-            }
+            } catch (e) { Swal.fire('Error', 'No se pudo eliminar', 'error'); }
         }
+    }
 
-        function addLog(code) {
-            const list = document.getElementById('log-list');
-            const item = document.createElement('div');
-            item.className = "flex justify-between p-3 bg-white rounded-xl shadow-sm text-[10px] border border-emerald-100 border-l-4 border-l-emerald-500";
-            item.innerHTML = `<strong>${code}</strong> <span class="text-emerald-500 font-bold uppercase">Recibido</span>`;
-            list.prepend(item);
-            if(list.children.length > 5) list.lastChild.remove();
-        }
-    </script>
+    // 5. CARGA DE TABLA Y LOGS
+    async function loadTable() {
+        const body = document.getElementById('table-body');
+        body.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-400 italic">Sincronizando...</td></tr>`;
+
+        try {
+            const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getAll' }) });
+            const res = await response.json();
+
+            if (res.status === "success") {
+                body.innerHTML = "";
+                res.data.reverse().forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = "border-b border-gray-50 hover:bg-red-50 transition-colors group";
+                    row.innerHTML = `
+                        <td class="p-3 font-mono font-bold text-gray-700">${item.code}</td>
+                        <td class="p-3 text-indigo-500">${item.user}</td>
+                        <td class="p-3 text-right text-gray-400 text-[10px] leading-tight">${item.date}<br>${item.time}</td>
+                        <td class="p-3 text-right">
+                            <button onclick="deleteDirect('${item.code}')" class="text-gray-300 group-hover:text-red-500 transition-colors p-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </td>
+                    `;
+                    body.appendChild(row);
+                });
+            }
+        } catch (e) { body.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-red-400 uppercase text-[10px]">Error de conexión</td></tr>`; }
+    }
+
+    function addLog(code) {
+        const list = document.getElementById('log-list');
+        const item = document.createElement('div');
+        item.className = "flex justify-between p-3 bg-white rounded-xl shadow-sm text-[10px] border border-emerald-100 border-l-4 border-l-emerald-500";
+        item.innerHTML = `<strong>${code}</strong> <span class="text-emerald-500 font-bold uppercase">Recibido</span>`;
+        list.prepend(item);
+        if(list.children.length > 5) list.lastChild.remove();
+    }
+</script>
+    
 </body>
 </html>
