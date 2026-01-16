@@ -11,6 +11,9 @@
         body { font-family: 'Inter', sans-serif; background: #f0f2f5; background-image: radial-gradient(#4f46e5 0.5px, #f0f2f5 0.5px); background-size: 20px 20px; }
         .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
         .tab-active { border-bottom: 3px solid #4f46e5; color: #4f46e5; }
+        /* Animación simple de rotación */
+        .spinner { animation: spin 1s linear infinite; border: 2px solid transparent; border-top-color: white; border-radius: 50%; width: 16px; height: 16px; display: inline-block; vertical-align: middle; margin-right: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -22,60 +25,83 @@
         </div>
         <select id="user-name" class="w-full p-4 bg-white border rounded-xl mb-4 outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="">-- Elige un responsable --</option>
-            <option value="Funcionario 1">ELTON LARA</option>
-            <option value="Funcionario 2">JHON AVILA</option>
-            <option value="Funcionario 2">CRISTIAN ESCORCIA</option>
-            <option value="Funcionario 2">SAMIR VITOLA</option>
-            <option value="Funcionario 2">JESUS GASSE2</option>
-            <option value="Funcionario 2">SERGIO OSORIO</option>
-            <option value="Funcionario 2">MAURICIO CARDONA</option>
-            <option value="Funcionario 2">CARLOS PAJARO</option>
-            <option value="Funcionario 2">ELIECER CRUZ</option>
+            <option value="ELTON LARA">ELTON LARA</option>
+            <option value="JHON AVILA">JHON AVILA</option>
+            <option value="CRISTIAN ESCORCIA">CRISTIAN ESCORCIA</option>
+            <option value="SAMIR VITOLA">SAMIR VITOLA</option>
+            <option value="JESUS GASSE2">JESUS GASSE2</option>
+            <option value="SERGIO OSORIO">SERGIO OSORIO</option>
+            <option value="MAURICIO CARDONA">MAURICIO CARDONA</option>
+            <option value="CARLOS PAJARO">CARLOS PAJARO</option>
+            <option value="ELIECER CRUZ">ELIECER CRUZ</option>
         </select>
         <button onclick="login()" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg">INICIAR SESIÓN</button>
     </div>
 
-    <div id="inventory-screen" class="hidden w-full max-w-lg glass p-6 rounded-3xl shadow-2xl">
+    <div id="inventory-screen" class="hidden w-full max-w-2xl glass p-6 rounded-3xl shadow-2xl transition-all">
         <div class="flex justify-between items-center mb-6">
             <p id="display-user" class="text-indigo-600 font-bold text-sm uppercase tracking-wider"></p>
-            <button onclick="logout()" class="text-red-400 text-xs font-bold uppercase">Salir</button>
+            <button onclick="logout()" class="text-red-400 text-xs font-bold uppercase hover:underline">Cerrar Sesión</button>
         </div>
 
         <div class="flex border-b mb-6 text-sm font-bold text-gray-400 uppercase tracking-widest">
             <button onclick="switchTab('reg')" id="tab-reg" class="flex-1 pb-3 tab-active">Registrar</button>
-            <button onclick="switchTab('manage')" id="tab-manage" class="flex-1 pb-3">Gestionar / Borrar</button>
+            <button onclick="switchTab('manage')" id="tab-manage" class="flex-1 pb-3">Gestión / Base de Datos</button>
         </div>
 
-        <div id="view-reg" class="space-y-6">
+        <div id="view-reg" class="space-y-6 animate-in fade-in">
             <input type="text" id="asset-code" placeholder="NO. DE ACTIVO" class="w-full p-5 border rounded-2xl text-2xl font-mono uppercase focus:ring-4 focus:ring-indigo-100 outline-none">
-            <button onclick="registerAsset()" id="btn-register" class="w-full bg-emerald-500 text-white font-extrabold py-5 rounded-2xl text-xl shadow-lg">REGISTRAR AHORA</button>
+            <button onclick="registerAsset()" id="btn-register" class="w-full bg-emerald-500 text-white font-extrabold py-5 rounded-2xl text-xl shadow-lg transition-all active:scale-95 flex justify-center items-center">
+                <span id="txt-register">REGISTRAR AHORA</span>
+            </button>
             
             <div class="mt-6">
-                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3">Recientes</h3>
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-widest">Mis Registros Recientes</h3>
                 <div id="log-list" class="space-y-2"></div>
             </div>
         </div>
 
         <div id="view-manage" class="hidden space-y-6">
             <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
-                <p class="text-xs text-indigo-500 font-bold mb-2 uppercase">Buscador de Activos</p>
+                <p class="text-[10px] text-indigo-500 font-bold mb-2 uppercase">Buscador Rápido</p>
                 <div class="flex gap-2">
-                    <input type="text" id="search-code" placeholder="NO. DE ACTIVO" class="flex-1 p-3 border rounded-xl uppercase font-mono outline-none">
-                    <button onclick="searchAsset()" class="bg-indigo-600 text-white px-4 rounded-xl font-bold italic">BUSCAR</button>
+                    <input type="text" id="search-code" placeholder="DIGITE NÚMERO..." class="flex-1 p-3 border rounded-xl uppercase font-mono outline-none text-sm">
+                    <button onclick="searchAsset()" id="btn-search" class="bg-indigo-600 text-white px-4 rounded-xl font-bold italic text-sm flex items-center transition-all">
+                        <span id="txt-search">BUSCAR</span>
+                    </button>
                 </div>
             </div>
             
-            <div id="search-result" class="hidden p-6 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-4">
-                <div class="text-center border-b pb-4">
-                    <p class="text-xs text-gray-400 font-bold uppercase">Resultado del registro</p>
-                    <h4 id="res-code" class="text-2xl font-black text-gray-800 font-mono mt-1"></h4>
+            <div id="search-result" class="hidden p-6 bg-white rounded-2xl border-2 border-indigo-200 shadow-sm space-y-4">
+                <div class="text-center border-b pb-4 text-gray-800">
+                    <h4 id="res-code" class="text-2xl font-black font-mono tracking-tighter"></h4>
                 </div>
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div><p class="text-gray-400">Fecha:</p><p id="res-date" class="font-bold text-gray-700"></p></div>
-                    <div><p class="text-gray-400">Hora:</p><p id="res-time" class="font-bold text-gray-700"></p></div>
-                    <div class="col-span-2 border-t pt-2 text-center"><p class="text-gray-400">Registrado por:</p><p id="res-user" class="font-bold text-indigo-600 text-lg"></p></div>
+                <div class="grid grid-cols-2 gap-4 text-[11px] uppercase font-bold">
+                    <div class="bg-gray-50 p-2 rounded"> <p class="text-gray-400">Fecha:</p> <p id="res-date"></p> </div>
+                    <div class="bg-gray-50 p-2 rounded"> <p class="text-gray-400">Hora:</p> <p id="res-time"></p> </div>
+                    <div class="col-span-2 bg-indigo-50 p-3 rounded text-center"> <p class="text-indigo-400">Registrado por:</p> <p id="res-user" class="text-indigo-700 text-sm"></p> </div>
                 </div>
-                <button onclick="confirmDelete()" class="w-full bg-red-100 text-red-600 font-bold py-3 rounded-xl hover:bg-red-600 hover:text-white transition-all">ELIMINAR DE LA BASE DE DATOS</button>
+                <button onclick="confirmDelete()" class="w-full bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-600 hover:text-white transition-all text-xs">ELIMINAR ESTE REGISTRO</button>
+            </div>
+
+            <div class="mt-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Base de Datos Completa</h3>
+                    <button onclick="loadTable()" class="text-[10px] bg-white border px-2 py-1 rounded shadow-sm font-bold text-gray-500 hover:bg-gray-50">Actualizar Tabla</button>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-gray-100">
+                    <table class="w-full text-left bg-white text-[11px]">
+                        <thead class="bg-gray-50 border-b text-gray-400 uppercase italic">
+                            <tr>
+                                <th class="p-3">Activo</th>
+                                <th class="p-3">Responsable</th>
+                                <th class="p-3 text-right">Fecha/Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="divide-y divide-gray-50">
+                            </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -88,7 +114,7 @@
 
         function login() {
             const name = document.getElementById('user-name').value;
-            if (!name) return;
+            if (!name) return Swal.fire('Error', 'Elige un nombre', 'error');
             localStorage.setItem('activeUser', name);
             currentUser = name;
             showInventory();
@@ -99,7 +125,8 @@
         function showInventory() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('inventory-screen').classList.remove('hidden');
-            document.getElementById('display-user').innerText = `RESPONSABLE: ${currentUser}`;
+            document.getElementById('display-user').innerText = `👤 ${currentUser}`;
+            loadTable(); // Cargar la tabla al iniciar
         }
 
         function switchTab(tab) {
@@ -107,59 +134,110 @@
             document.getElementById('view-manage').classList.toggle('hidden', tab !== 'manage');
             document.getElementById('tab-reg').classList.toggle('tab-active', tab === 'reg');
             document.getElementById('tab-manage').classList.toggle('tab-active', tab === 'manage');
+            if(tab === 'manage') loadTable();
         }
 
         async function registerAsset() {
             const input = document.getElementById('asset-code');
             const code = input.value.trim().toUpperCase();
+            const btn = document.getElementById('btn-register');
+            const txt = document.getElementById('txt-register');
+
             if (!code) return;
+
+            // Bloqueo de botón
+            btn.disabled = true;
+            btn.classList.replace('bg-emerald-500', 'bg-gray-400');
+            txt.innerHTML = `<span class="spinner"></span> REGISTRANDO...`;
 
             try {
                 const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ code: code, user: currentUser }) });
                 const res = await response.json();
 
                 if (res.status === "exists") {
-                    Swal.fire({ icon: 'warning', title: 'YA REGISTRADO', html: `REGISTRADO EL DÍA ${res.date} A LAS ${res.time}` });
+                    Swal.fire({ icon: 'error', title: 'ACTIVO YA REGISTRADO', html: `REGISTRO: <b>${res.date} - ${res.time}</b>` });
                 } else {
-                    Swal.fire({ icon: 'success', title: 'ACTIVO REGISTRADO', timer: 1500, showConfirmButton: false });
+                    Swal.fire({ icon: 'success', title: 'REGISTRADO CON ÉXITO', timer: 1500, showConfirmButton: false });
                     addLog(code);
                     input.value = '';
                 }
-            } catch (e) { Swal.fire('Error', 'Problema de conexión', 'error'); }
+            } catch (e) { Swal.fire('Error', 'Sin conexión', 'error'); }
+            
+            btn.disabled = false;
+            btn.classList.replace('bg-gray-400', 'bg-emerald-500');
+            txt.innerHTML = `REGISTRAR AHORA`;
+            input.focus();
         }
 
         async function searchAsset() {
             const code = document.getElementById('search-code').value.trim().toUpperCase();
+            const btn = document.getElementById('btn-search');
+            const txt = document.getElementById('txt-search');
             if (!code) return;
 
-            const resDiv = document.getElementById('search-result');
-            resDiv.classList.add('hidden');
+            btn.disabled = true;
+            txt.innerHTML = `<span class="spinner"></span>`;
 
-            const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'search', code: code }) });
-            const res = await response.json();
+            try {
+                const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'search', code: code }) });
+                const res = await response.json();
 
-            if (res.status === "found") {
-                document.getElementById('res-code').innerText = code;
-                document.getElementById('res-date').innerText = res.date;
-                document.getElementById('res-time').innerText = res.time;
-                document.getElementById('res-user').innerText = res.user;
-                resDiv.classList.remove('hidden');
-            } else {
-                Swal.fire('No encontrado', 'Este numero no existe en la base de datos', 'info');
-            }
+                if (res.status === "found") {
+                    document.getElementById('res-code').innerText = code;
+                    document.getElementById('res-date').innerText = res.date;
+                    document.getElementById('res-time').innerText = res.time;
+                    document.getElementById('res-user').innerText = res.user;
+                    document.getElementById('search-result').classList.remove('hidden');
+                } else {
+                    Swal.fire('No encontrado', 'El activo no está registrado.', 'info');
+                    document.getElementById('search-result').classList.add('hidden');
+                }
+            } catch (e) { }
+
+            btn.disabled = false;
+            txt.innerText = "BUSCAR";
+        }
+
+        async function loadTable() {
+            const body = document.getElementById('table-body');
+            body.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-gray-400 italic">Cargando datos...</td></tr>`;
+
+            try {
+                const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getAll', code: '' }) });
+                const res = await response.json();
+
+                if (res.status === "success") {
+                    body.innerHTML = "";
+                    res.data.reverse().slice(0, 50).forEach(item => { // Mostramos los últimos 50
+                        const row = `<tr>
+                            <td class="p-3 font-mono font-bold">${item.code}</td>
+                            <td class="p-3 text-indigo-500">${item.user}</td>
+                            <td class="p-3 text-right text-gray-400">${item.date}<br>${item.time}</td>
+                        </tr>`;
+                        body.innerHTML += row;
+                    });
+                }
+            } catch (e) { body.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-red-400">Error al cargar datos</td></tr>`; }
         }
 
         async function confirmDelete() {
             const code = document.getElementById('res-code').innerText;
-            const confirm = await Swal.fire({ title: '¿Borrar registro?', text: `Se eliminará permanentemente el código ${code}`, icon: 'danger', showCancelButton: true, confirmButtonText: 'Sí, ELIMINAR', confirmButtonColor: '#dc2626' });
+            const confirm = await Swal.fire({ 
+                title: '¿Confirmar Borrado?', 
+                text: `Se borrará el activo ${code} de forma permanente.`, 
+                icon: 'warning', 
+                showCancelButton: true, 
+                confirmButtonText: 'ELIMINAR', 
+                confirmButtonColor: '#dc2626' 
+            });
 
             if (confirm.isConfirmed) {
                 const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', code: code }) });
                 const res = await response.json();
                 if (res.status === "deleted") {
-                    Swal.fire('Borrado', 'El registro fue eliminado', 'success');
+                    Swal.fire('Eliminado', '', 'success');
                     document.getElementById('search-result').classList.add('hidden');
-                    document.getElementById('search-code').value = '';
+                    loadTable();
                 }
             }
         }
@@ -167,9 +245,10 @@
         function addLog(code) {
             const list = document.getElementById('log-list');
             const item = document.createElement('div');
-            item.className = "flex justify-between p-3 bg-white rounded-xl shadow-sm text-xs border";
-            item.innerHTML = `<strong>${code}</strong> <span class="text-emerald-500 font-bold">RECIBIDO</span>`;
+            item.className = "flex justify-between p-3 bg-white rounded-xl shadow-sm text-[10px] border border-emerald-100 border-l-4 border-l-emerald-500";
+            item.innerHTML = `<strong>${code}</strong> <span class="text-emerald-500 font-bold uppercase">Recibido</span>`;
             list.prepend(item);
+            if(list.children.length > 5) list.lastChild.remove();
         }
     </script>
 </body>
